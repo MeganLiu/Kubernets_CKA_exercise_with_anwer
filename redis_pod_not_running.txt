@@ -3,6 +3,8 @@
 controlplane $ k get pods
 NAME        READY   STATUS    RESTARTS   AGE
 redis-pod   0/1     Pending   0          10m
+###Step 1, check pod status 
+
 controlplane $ k describe pod redis-pod
 Name:             redis-pod
 Namespace:        default
@@ -45,3 +47,119 @@ Events:
   Type     Reason            Age                From               Message
   ----     ------            ----               ----               -------
   Warning  FailedScheduling  45s (x3 over 10m)  default-scheduler  0/2 nodes are available: persistentvolumeclaim "pvc-redis" not found. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+#### step2 , query PVC
+
+controlplane $ k get pvc
+NAME        STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+redis-pvc   Pending                                      manually       <unset>                 13m
+controlplane $ ls
+
+#### Step3, 
+
+change pvc name("pvc-redis" not found) to be redis-pvc in the deployment 
+
+## Step 4 , query pv
+
+controlplane $ k get pvc redis-pvc -o yaml 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"name":"redis-pvc","namespace":"default"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"80Mi"}},"storageClassName":"manually"}}
+  creationTimestamp: "2025-03-03T14:21:44Z"
+  finalizers:
+  - kubernetes.io/pvc-protection
+  name: redis-pvc
+  namespace: default
+  resourceVersion: "3649"
+  uid: 19cfae52-0b29-4e30-912d-d2d566c1a2fb
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 80Mi
+  storageClassName: manually
+  volumeMode: Filesystem
+status:
+  phase: Pending
+#### Step query , PV, find "storageclass" is "manual" not  "storageClassName: manually"
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+redis-pv   100Mi      RWO            Retain           Available           manual         <unset>                          19m
+controlplane $ k get pv redis-pv -o yaml
+### Step , update PVC to use the correct storage class
+
+## Step ,, check pods status
+
+controlplane $ k get pods  
+NAME        READY   STATUS             RESTARTS   AGE
+redis-pod   0/1     ImagePullBackOff   0          12m
+controlplane $ k describe pod redis-pod
+Name:             redis-pod
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             node01/172.30.2.2
+Start Time:       Mon, 03 Mar 2025 14:44:48 +0000
+Labels:           <none>
+Annotations:      cni.projectcalico.org/containerID: 12055a943704c93814638bb9fa308a11538c5c0e44405254f9fac18c676856df
+                  cni.projectcalico.org/podIP: 192.168.1.4/32
+                  cni.projectcalico.org/podIPs: 192.168.1.4/32
+Status:           Pending
+IP:               192.168.1.4
+IPs:
+  IP:  192.168.1.4
+Containers:
+  redis-container:
+    Container ID:   
+    Image:          redis:latested
+    Image ID:       
+    Port:           6379/TCP
+    Host Port:      0/TCP
+    State:          Waiting
+      Reason:       ImagePullBackOff
+    Ready:          False
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /data from redis-data (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-w8jnn (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  redis-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  redis-pvc
+    ReadOnly:   false
+  kube-api-access-w8jnn:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age                    From               Message
+  ----     ------            ----                   ----               -------
+  Warning  FailedScheduling  5m12s                  default-scheduler  0/2 nodes are available: persistentvolumeclaim "redis-pvc" is being deleted. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+  Warning  FailedScheduling  5m (x3 over 12m)       default-scheduler  0/2 nodes are available: pod has unbound immediate PersistentVolumeClaims. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+  Normal   Scheduled         4m51s                  default-scheduler  Successfully assigned default/redis-pod to node01
+  Normal   Pulling           3m10s (x4 over 4m50s)  kubelet            Pulling image "redis:latested"
+  Warning  Failed            3m7s (x4 over 4m47s)   kubelet            Failed to pull image "redis:latested": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/library/redis:latested": failed to resolve reference "docker.io/library/redis:latested": docker.io/library/redis:latested: not found
+  Warning  Failed            3m7s (x4 over 4m47s)   kubelet            Error: ErrImagePull
+  Warning  Failed            2m52s (x6 over 4m46s)  kubelet            Error: ImagePullBackOff
+  Normal   BackOff           2m37s (x7 over 4m46s)  kubelet            Back-off pulling image "redis:latested"
+
+###update redis image ( "redis:latested") should be ( "redis:latest")
+
+
+## check pods status
