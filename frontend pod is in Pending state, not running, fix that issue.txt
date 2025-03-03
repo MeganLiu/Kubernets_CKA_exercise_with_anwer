@@ -1,0 +1,167 @@
+### question 
+
+frontend pod is in Pending state, not running, fix that issue
+
+Note: Don't remove any specification in frontend pod.
+
+##Step1, check the pod status 
+
+controlplane $ k get pods
+NAME       READY   STATUS    RESTARTS   AGE
+frontend   0/1     Pending   0          48s
+
+## Get more details
+
+controlplane $ k describe pod frontend 
+Name:             frontend
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           <none>
+Annotations:      <none>
+Status:           Pending
+IP:               
+IPs:              <none>
+Containers:
+  my-container:
+    Image:        nginx:latest
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-7hqng (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  kube-api-access-7hqng:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age   From               Message
+  ----     ------            ----  ----               -------
+  Warning  FailedScheduling  77s   default-scheduler  0/2 nodes are available: 1 node(s) didn't match Pod's node affinity/selector, 1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+
+### check pod affinity 
+controlplane $  k get pods frontend -o yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"name":"frontend","namespace":"default"},"spec":{"affinity":{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"NodeName","operator":"In","values":["frontend"]}]}]}}},"containers":[{"image":"nginx:latest","name":"my-container"}]}}
+  creationTimestamp: "2025-03-03T15:00:58Z"
+  name: frontend
+  namespace: default
+  resourceVersion: "6453"
+  uid: 08f22d24-842a-4d26-b275-99b00a9cd85f
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: NodeName
+            operator: In
+            values:
+            - frontend
+  containers:
+  - image: nginx:latest
+    imagePullPolicy: Always
+    name: my-container
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-7hqng
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: kube-api-access-7hqng
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2025-03-03T15:00:58Z"
+    message: '0/2 nodes are available: 1 node(s) didn''t match Pod''s node affinity/selector,
+      1 node(s) had untolerated taint {node-role.kubernetes.io/control-plane: }. preemption:
+      0/2 nodes are available: 2 Preemption is not helpful for scheduling.'
+    reason: Unschedulable
+    status: "False"
+    type: PodScheduled
+  phase: Pending
+  qosClass: BestEffort
+
+
+#######
+
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: NodeName
+            operator: In
+            values:
+            - frontend
+###### Step , get node's labels
+kubectl get nodes --show-labels
+NAME           STATUS   ROLES           AGE   VERSION   LABELS
+controlplane   Ready    control-plane   19d   v1.31.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=controlplane,kubernetes.io/os=linux,node-role.kubernetes.io/control-plane=,node.kubernetes.io/exclude-from-external-load-balancers=
+node01         Ready    <none>          19d   v1.31.0   NodeName=frontendnodes,beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=node01,kubernetes.io/os=linux
+
+found one node has rthe name  "NodeName=frontendnodes"
+
+### update pods to use this label "NodeName=frontendnodes" not "frontend"
+
+## check pod status
+
+^Ccontrolplane $ k get pods   
+NAME       READY   STATUS    RESTARTS   AGE
+frontend   1/1     Running   0          22s
+
+
