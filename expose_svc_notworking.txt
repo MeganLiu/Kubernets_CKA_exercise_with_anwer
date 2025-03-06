@@ -47,9 +47,30 @@ NAME            ENDPOINTS   AGE
 nginx-service   <none>      22m
 
 ###
+ontrolplane $ kdes svc nginx-service |  grep Selector
+Selector:                 app=nginx-pod
+
+controlplane $ kgpd --show-labels
+NAME        READY   STATUS    RESTARTS   AGE   LABELS
+nginx-pod   1/1     Running   0          23m   <none>
+
+SO : there is no matched lable for pod
+
+The issue is that your pod does not have any labels, but your service is selecting app=nginx-pod.
+
+Since kubectl get pods --show-labels shows <none> for labels, the service cannot find the pod, which is why curl is failing.
+
+✅ Fix: Add the Correct Label to the Pod
+To make the service work, add the missing label to the pod:
 
 
+kubectl label pod nginx-pod app=nginx-pod
+Verify:
 
+sh
+Copy
+Edit
+kubectl get pods --show-labels
 
 
 
