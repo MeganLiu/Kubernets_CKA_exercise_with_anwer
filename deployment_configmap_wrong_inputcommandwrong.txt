@@ -53,3 +53,23 @@ Init Containers:
       Reason:       StartError
       Message:      failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "shell": executable file not found in $PATH: unknown
       Exit Code:    128
+### kuberent  command usage
+initContainers:
+  - name: welcome-init
+    image: busybox  # Use a minimal image that supports shell commands
+    command: ["/bin/sh", "-c", "echo 'Welcome To KillerCoda!'"]
+    command:["/bin/sh" , "-c", "echo 'welcome to KillerCocde!'"]
+
+##ontrolplane $ kgpd
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-587c884d75-cp642   1/1     Running   0          22s
+
+
+
+
+
+
+
+
+
+
