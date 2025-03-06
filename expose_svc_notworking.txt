@@ -1,0 +1,57 @@
+
+#####
+nginx-pod exposed to service nginx-service ,
+
+when port-forwarded kubectl port-forward svc/nginx-service 8080:80 it is stuck, so unable to access application curl http://localhost:8080
+
+
+
+####
+
+Check If the Service Has Endpoints
+Run:
+
+sh
+Copy
+Edit
+kubectl get endpoints nginx-service
+✅ Expected Output:
+
+nginx
+Copy
+Edit
+NAME            ENDPOINTS           AGE
+nginx-service   10.244.X.X:80       19m
+❌ If the endpoints list is empty, the service is not routing to the pod.
+Fix this by checking pod labels.
+
+3️⃣ Check If the Service Selector Matches the Pod
+Run:
+
+sh
+Copy
+Edit
+kubectl get pods --show-labels
+Check service selectors:
+
+sh
+Copy
+Edit
+kubectl describe svc nginx-service | grep Selector
+✅ Ensure the pod labels match the service selector.
+❌ If they don’t match, edit the service:
+
+###
+controlplane $ k get endpoints  nginx-service
+NAME            ENDPOINTS   AGE
+nginx-service   <none>      22m
+
+###
+
+
+
+
+
+
+
+
