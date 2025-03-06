@@ -1,0 +1,55 @@
+#### Question
+
+kubectl config use-context kubernetes-admin@kubernetes
+
+
+nginx-deployment deployment pods are not running, fix that issue
+
+ #### testing
+
+  vents:
+  Type     Reason       Age                From               Message
+  ----     ------       ----               ----               -------
+  Normal   Scheduled    80s                default-scheduler  Successfully assigned default/nginx-deployment-5bf48dd9b5-5j2p9 to node01
+  Warning  FailedMount  16s (x8 over 80s)  kubelet            MountVolume.SetUp failed for volume "nginx-config" : configmap "nginx-configuration" not found
+controlplane $ k get configmap
+NAME               DATA   AGE
+kube-root-ca.crt   1      22d
+nginx-configmap    1      9m15s
+
+    So configmap has the wrong name , update configmap
+
+#### kdespd 
+      kdespd
+Name:             nginx-deployment-6b7f6556dc-2gg58
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             node01/172.30.2.2
+Start Time:       Thu, 06 Mar 2025 09:29:02 +0000
+Labels:           app=nginx
+                  pod-template-hash=6b7f6556dc
+Annotations:      cni.projectcalico.org/containerID: 10cf76939b1b301ec4d81d8f4b6756829494b618e931e21c3c642e3d8b134d69
+                  cni.projectcalico.org/podIP: 192.168.1.6/32
+                  cni.projectcalico.org/podIPs: 192.168.1.6/32
+Status:           Pending
+IP:               192.168.1.6
+IPs:
+  IP:           192.168.1.6
+Controlled By:  ReplicaSet/nginx-deployment-6b7f6556dc
+Init Containers:
+  init-container:
+    Container ID:  containerd://5fd6e301a389f73dc5280e1409c6959c22d01e270ae20a34784e54f634325861
+    Image:         busybox
+    Image ID:      docker.io/library/busybox@sha256:498a000f370d8c37927118ed80afe8adc38d1edcbfc071627d17b25c88efcab0
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      shell
+      echo 'Welcome To KillerCoda!'
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       StartError
+      Message:      failed to create containerd task: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: exec: "shell": executable file not found in $PATH: unknown
+      Exit Code:    128
