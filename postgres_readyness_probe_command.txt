@@ -1,0 +1,77 @@
+
+
+
+#########Oirignal yaml file
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres-pod
+spec:
+  containers:
+    - name: postgres
+      image: postgres:latest
+      env:
+        - name: POSTGRES_PASSWORD
+          value: dbpassword
+        - name: POSTGRES_DB
+          value: database
+      ports:
+        - containerPort: 5432
+      livenessProbe:
+        tcpSocket:
+          command:   ######--> change it to port : 5432
+            arg: 5432
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        exec:
+          cmd: #####change to command not cmd
+          ##  command:
+          ##  - "/bin/sh"
+          ##  - "c"
+          ##   - "PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -d database -c 'SELECT 1'"
+            - "psql"
+            - "-h"
+            - "localhost"
+            - "-U"
+            - "postgres"
+            - "-c"
+            - "SELECT 1"
+        initialDelaySeconds: 5
+        periodSeconds: 5
+
+
+
+
+#########
+
+piVersion: v1
+kind: Pod
+metadata:
+  name: postgres-pod
+spec:
+  containers:
+    - name: postgres
+      image: postgres:latest
+      env:
+        - name: POSTGRES_PASSWORD
+          value: dbpassword
+        - name: POSTGRES_DB
+          value: database
+      ports:
+        - containerPort: 5432
+      livenessProbe:
+        tcpSocket:
+          port: 5432
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:
+        exec:
+          command:
+            - "/bin/sh"
+            - "c"
+            - "PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -d database -c 'SELECT 1'"
+        initialDelaySeconds: 5
+        periodSeconds: 5
