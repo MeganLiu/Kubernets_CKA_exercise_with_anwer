@@ -17,26 +17,17 @@ Edit
 kubectl get endpoints nginx-service
 ✅ Expected Output:
 
-nginx
-Copy
-Edit
+
 NAME            ENDPOINTS           AGE
 nginx-service   10.244.X.X:80       19m
 ❌ If the endpoints list is empty, the service is not routing to the pod.
 Fix this by checking pod labels.
 
 3️⃣ Check If the Service Selector Matches the Pod
-Run:
 
-sh
-Copy
-Edit
 kubectl get pods --show-labels
 Check service selectors:
 
-sh
-Copy
-Edit
 kubectl describe svc nginx-service | grep Selector
 ✅ Ensure the pod labels match the service selector.
 ❌ If they don’t match, edit the service:
@@ -63,16 +54,29 @@ Since kubectl get pods --show-labels shows <none> for labels, the service cannot
 ✅ Fix: Add the Correct Label to the Pod
 To make the service work, add the missing label to the pod:
 
-
 kubectl label pod nginx-pod app=nginx-pod
-Verify:
 
-sh
-Copy
-Edit
 kubectl get pods --show-labels
 
+controlplane $ k label pod nginx-pod app=nginx-pod
+pod/nginx-pod labeled
+controlplane $ kgpd --show-labels
+NAME        READY   STATUS    RESTARTS   AGE   LABELS
+nginx-pod   1/1     Running   0          29m   app=nginx-pod
+controlplane $ k get endpoints nginx-service
+NAME            ENDPOINTS        AGE
+nginx-service   192.168.1.4:80   29m
 
+ontrolplane $ kgpd --show-labels
+NAME        READY   STATUS    RESTARTS   AGE   LABELS
+nginx-pod   1/1     Running   0          29m   app=nginx-pod
+controlplane $ k get endpoints nginx-service
+NAME            ENDPOINTS        AGE
+nginx-service   192.168.1.4:80   29m
+
+controlplane $ kubectl port-forward svc/nginx-service 8080:80
+Forwarding from 127.0.0.1:8080 -> 80
+Forwarding from [::1]:8080 -> 80
 
 
 
