@@ -9,15 +9,8 @@ when port-forwarded kubectl port-forward svc/nginx-service 8080:80 it is stuck, 
 ####
 
 Check If the Service Has Endpoints
-Run:
-
-sh
-Copy
-Edit
 kubectl get endpoints nginx-service
 ✅ Expected Output:
-
-
 NAME            ENDPOINTS           AGE
 nginx-service   10.244.X.X:80       19m
 ❌ If the endpoints list is empty, the service is not routing to the pod.
